@@ -1,24 +1,19 @@
-/**
- *  ESTO HICE CUANDO NO TENIA DB y lo borro también del archivo app,js
- * import {config} from "dotenv"
+import { config } from "dotenv";
+import { createPool } from "mysql2/promise";
 
-//declaramos el puerto
-config(); //es el de dotenv
-const app = {
-  port: process.env.PORT || 3000, //lo declaro aca y lo uso en app.js en la configuración
-};
+config();
 
-export default app;*/
-
-import {config} from "dotenv";
-config(); //es el de dotenv
-import {createPool} from "mysql2/promise";
 //conexión con DB
+
 const pool = createPool({
-  port: process.env.PORT,
-  host: process.env.HOST,
-  user: process.env.USER,
-  database: process.env.DATABASE,
+  port: process.env.DB_PORT,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
 });
+
+
+
 
 export default pool;

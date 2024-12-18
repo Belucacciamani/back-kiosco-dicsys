@@ -3,85 +3,145 @@ import pool from "../../config.js";
 
 const router = express.Router();
 
-//listar productos
-
+// Listar productos
 router.get("/", async (req, res) => {
   try {
-    const [result] = await pool.query("select * from productos");
-    res.send(result);
+
+    const [result] = await pool.query("select * from products");
+   
+    if (result.length === 0) {
+      return res.status(404).json({ message: "No hay categorías" });
+    }
+    res.status(200).json(result);
   } catch (error) {
-    console.log("error al listar", error);
-    res.status(404).send("error al listar productos");
+    console.error("Error al listar productos", error);
+    res.status(404).json({ message: "Error al listar categorías" });
   }
 });
 
-//CREAR PRODUCTO
 
+
+// Listar productos por categoría
+router.get("/:category_id", async (req, res) => {
+
+  try {    
+    const { category_id } = req.params;
+   
+    const [result] = await pool.query(
+      "SELECT * FROM products WHERE category_id = ?",
+      [category_id]
+    );
+
+    if (result.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No hay productos para esta categoría" });
+    }
+
+    
+    res.status(200).json(result);
+
+  } catch (error) {
+    console.error("Error al listar productos por categoría", error);
+    res
+      .status(500)
+      .json({ message: "Error al listar productos por categoría" });
+  }
+});
+
+
+
+// Crear producto
 router.post("/", async (req, res) => {
   try {
-    const {nombre} = req.body;
-    const {fecha_vencimiento} = req.body;
-    const {id_categoria} = req.body;
+    const {
+      product_name,
+      product_description,
+      product_price,
+      product_stock,
+      category_id,
+    } = req.body;
 
-    if ((!nombre, !fecha_vencimiento, !id_categoria)) {
+    // Validar campos obligatorios
+    if (!product_name || !product_price || !product_stock || !category_id) {
       return res
         .status(400)
         .send(
-          "Error: El campo 'nombre', 'fecha_vencimiento' y id_categoria son obligatorios"
+          "Error: Los campos 'Nombre', 'Precio', 'Stock' y 'categoria id' son obligatorios"
         );
     }
+
     const result = await pool.query(
-      "insert  into productos (nombre, fecha_vencimiento,  id_categoria) values(?,?,?) ",
-      [nombre, fecha_vencimiento, id_categoria]
+      "INSERT INTO products (product_name, product_description, product_price, product_stock, category_id) VALUES (?, ?, ?, ?, ?)",
+      [
+        product_name,
+        product_description,
+        product_price,
+        product_stock,
+        category_id,
+      ]
     );
     const newProductId = result.insertId;
-    res.send(newProductId);
+    res.send({ message: "Producto creado con éxito", id: newProductId });
   } catch (error) {
-    console.log("error al crear productos", error);
-    res.status(404).send("error al crear productos");
+    console.log("Error al crear producto", error);
+    res.status(404).send("Error al crear producto");
   }
 });
 
-//actualizar producto
-
+// Actualizar producto
 router.put("/:id", async (req, res) => {
   try {
-    const {id} = req.params;
-    const {nombre, fecha_vencimiento, id_categoria, precio, stock} = req.body;
+    const { id } = req.params;
+    const {
+      product_name,
+      product_description,
+      product_price,
+      product_stock,
+      category_id,
+    } = req.body;
 
-    if (!nombre || !fecha_vencimiento || !id_categoria) {
+    // Validar campos obligatorios
+    if (!product_name || !product_price || !product_stock || !category_id) {
       return res.status(400).send("Todos los campos son obligatorios");
     }
 
     await pool.query(
-      "update productos set nombre =?, fecha_vencimiento =?, id_categoria =?, precio =?, stock=? WHERE id_producto =?",
-      [nombre, fecha_vencimiento, id_categoria, precio, stock, id]
+      "UPDATE products SET product_name = ?, product_description = ?, product_price = ?, product_stock = ?, category_id = ? WHERE id_product = ?",
+      [
+        product_name,
+        product_description,
+        product_price,
+        product_stock,
+        category_id,
+        id,
+      ]
     );
 
     res.json({
       message: "Producto actualizado con éxito",
     });
   } catch (error) {
-    console.log("error al actualizar producto", error);
-    res.status(404).send("error al actualizar producto");
+    console.log("Error al actualizar producto", error);
+    res.status(404).send("Error al actualizar producto");
   }
 });
 
-//eliminar productos
-
+// Eliminar producto
 router.delete("/:id", async (req, res) => {
   try {
-    const {id} = req.params;
+    const { id } = req.params;
 
-    await pool.query("delete from productos where id_producto=?", [id]);
+    // Eliminar el producto
+    await pool.query("DELETE FROM products WHERE id_product = ?", [id]);
 
     res.json({
       message: "Producto eliminado con éxito",
-      data: {id},
+      data: { id },
     });
   } catch (error) {
-    console.log("Error al eliminar el producto", error);
-    res.status(404).send("Error al eliminar el producto");
+    console.log("Error al eliminar producto", error);
+    res.status(404).send("Error al eliminar producto");
   }
 });
 
